@@ -37,7 +37,8 @@
                 "bierner.markdown-preview-github-styles",
                 "donjayamanne.githistory",
                 "twxs.cmake",
-                "ms-vsliveshare.vsliveshare"
+                "ms-vsliveshare.vsliveshare",
+                "harikrishnan94.cxx-compiler-explorer"
             ]
         }
     },
