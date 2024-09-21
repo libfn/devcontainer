@@ -4,7 +4,9 @@
     "build": {
         "dockerfile": "Dockerfile",
         "args": {
-            "HOME": "${localEnv:HOME}"
+            "HOME": "${localEnv:HOME}",
+            "CLANG_RELEASE": "19",
+            "GCC_RELEASE": "14"
         }
     },
     "initializeCommand": [
@@ -16,6 +18,7 @@
         "DEVCONTAINER_ID": "${devcontainerId}",
         // Pass ssh-agent sock for git authentication
         "SSH_AUTH_SOCK": "/run/user/${localEnv:UID}/ssh",
+        "CCACHE_BASEDIR": "${localWorkspaceFolder}",
         "WORK": "${localWorkspaceFolder}"
     },
     "init": true,

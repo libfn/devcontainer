@@ -1,5 +1,5 @@
 ARG CODENAME=bookworm
-ARG GCC_RELEASE=14.1
+ARG GCC_RELEASE=14
 ARG GCC_DIST=${GCC_RELEASE}-${CODENAME}
 FROM gcc:${GCC_DIST} AS gcc
 RUN set -ex ;\
@@ -34,7 +34,7 @@ RUN set -ex ;\
       update-alternatives --auto cc ;\
       update-alternatives --auto gcc
 
-ARG CLANG_RELEASE=18
+ARG CLANG_RELEASE=19
 RUN set -ex ;\
     DEBIAN_FRONTEND=noninteractive ;\
     CODENAME=$( . /etc/os-release && echo $VERSION_CODENAME ) ;\
@@ -47,7 +47,7 @@ RUN set -ex ;\
       | tee /etc/apt/sources.list.d/llvm.list ;\
     apt-get update ;\
     apt-get install -y --no-install-recommends \
-      lsb-release less vim curl git grep sed gdb zsh lcov cmake ninja-build ccache \
+      lsb-release less vim curl git grep sed gdb zsh lcov cmake ninja-build openssh-client ccache \
       python3 python3-pip python3-venv ;\
     apt-get install -t llvm-toolchain-${CODENAME}-${CLANG_RELEASE} -y --no-install-recommends \
       clang-${CLANG_RELEASE} clang-tools-${CLANG_RELEASE} clang-tidy-${CLANG_RELEASE} clang-format-${CLANG_RELEASE} \
