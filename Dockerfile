@@ -11,11 +11,10 @@ RUN set -ex ;\
 ARG CODENAME=bookworm
 FROM debian:${CODENAME}
 COPY --from=gcc /usr/local/ /usr/local/
+COPY --from=gcc /etc/ld.so.conf.d/*.conf /etc/ld.so.conf.d/
 
 WORKDIR /root
 RUN set -ex ;\
-    echo '/usr/local/lib64' > /etc/ld.so.conf.d/000-local-lib.conf; \
-    echo '/usr/local/lib' >> /etc/ld.so.conf.d/000-local-lib.conf; \
     ldconfig -v ;\
     dpkg-divert --divert /usr/bin/gcc.orig --rename /usr/bin/gcc ;\
     dpkg-divert --divert /usr/bin/g++.orig --rename /usr/bin/g++ ;\
@@ -24,6 +23,7 @@ RUN set -ex ;\
     update-alternatives --install \
       /usr/bin/gcc gcc /usr/local/bin/gcc 100 \
       --slave /usr/bin/g++ g++ /usr/local/bin/g++ \
+      --slave /usr/bin/gfortran gfortran /usr/local/bin/gfortran \
       --slave /usr/bin/gcc-ar gcc-ar /usr/local/bin/gcc-ar \
       --slave /usr/bin/gcc-nm gcc-nm /usr/local/bin/gcc-nm \
       --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/local/bin/gcc-ranlib \
@@ -39,7 +39,7 @@ RUN set -ex ;\
     DEBIAN_FRONTEND=noninteractive ;\
     CODENAME=$( . /etc/os-release && echo $VERSION_CODENAME ) ;\
     apt-get update ;\
-    apt-get install -y --no-install-recommends ca-certificates wget gpg ;\
+    apt-get install -y --no-install-recommends ca-certificates wget gpg gpg-agent ;\
     wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm.gpg ;\
     printf "%s\n%s\n" \
       "deb [signed-by=/etc/apt/keyrings/llvm.gpg] https://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-${CLANG_RELEASE} main" \
@@ -47,7 +47,7 @@ RUN set -ex ;\
       | tee /etc/apt/sources.list.d/llvm.list ;\
     apt-get update ;\
     apt-get install -y --no-install-recommends \
-      lsb-release less vim curl git grep sed gdb zsh lcov cmake ninja-build openssh-client ccache \
+      lsb-release libc6-dev less vim xxd curl git grep sed gdb zsh lcov make cmake ninja-build openssh-client ccache jq \
       python3 python3-pip python3-venv ;\
     apt-get install -t llvm-toolchain-${CODENAME}-${CLANG_RELEASE} -y --no-install-recommends \
       clang-${CLANG_RELEASE} clang-tools-${CLANG_RELEASE} clang-tidy-${CLANG_RELEASE} clang-format-${CLANG_RELEASE} \
@@ -77,7 +77,7 @@ RUN set -ex ;\
     wget -O /etc/zsh/newuser.zshrc.recommended  https://git.grml.org/f/grml-etc-core/etc/skel/.zshrc ;\
     chsh -s /bin/zsh
 
-ARG HOME
+ARG HOME=/home
 ENV HOME=${HOME}
 WORKDIR ${HOME}
 
@@ -100,6 +100,6 @@ ENV CMAKE_BUILD_TYPE=Debug
 RUN cp /etc/zsh/newuser.zshrc.recommended .zshrc ;\
     touch .zshrc.local ;\
     ln -s .profile .zprofile ;\
-    echo "alias to-gcc='export CC=/usr/bin/gcc; export CXX=/usr/bin/g++; env | grep --color=never -E \"^CC=|^CXX=\"'" >> ~/.zprofile ;\
-    echo "alias to-clang='export CC=/usr/bin/clang; export CXX=/usr/bin/clang++; env | grep --color=never -E \"^CC=|^CXX=\"'" >> ~/.zprofile ;\
+    echo "alias to-gcc='export CC=/usr/bin/gcc; export CXX=/usr/bin/g++; unset CXXFLAGS; env | grep --color=never -E \"^CC=|^CXX=|^CXXFLAGS=\"'" >> ~/.zprofile ;\
+    echo "alias to-clang='export CC=/usr/bin/clang; export CXX=/usr/bin/clang++; export CXXFLAGS=-stdlib=libc++; env | grep --color=never -E \"^CC=|^CXX=|^CXXFLAGS=\"'" >> ~/.zprofile ;\
     echo "alias rm-build='realpath . | grep \"^.*/\.build[^/]*$\" &>/dev/null && find -mindepth 1 -maxdepth 1 -type d -not -path ./_deps | xargs rm -rf {} \; && find -mindepth 1 -maxdepth 1 -type f | xargs rm -f {} \;'" >> ~/.zprofile
