@@ -47,7 +47,7 @@ RUN set -ex ;\
       | tee /etc/apt/sources.list.d/llvm.list ;\
     apt-get update ;\
     apt-get install -y --no-install-recommends \
-      lsb-release libc6-dev less vim xxd curl git grep sed gdb zsh lcov make cmake ninja-build openssh-client ccache jq \
+      lsb-release libc6-dev less vim xxd curl git grep sed gdb zsh lcov make cmake ninja-build openssh-client ccache jq zip unzip bzip2 \
       python3 python3-pip python3-venv ;\
     apt-get install -t llvm-toolchain-${CODENAME}-${CLANG_RELEASE} -y --no-install-recommends \
       clang-${CLANG_RELEASE} clang-tools-${CLANG_RELEASE} clang-tidy-${CLANG_RELEASE} clang-format-${CLANG_RELEASE} \
@@ -86,7 +86,7 @@ ENV PATH=${VENV}/bin:${PATH}
 ENV CCACHE_DIR=${HOME}/.ccache
 RUN set -ex ;\
     python3 -m venv ${VENV}  ;\
-    pip --no-cache-dir install 'gcovr<8'  ;\
+    pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' ;\
     mkdir -p ${CCACHE_DIR}
 
 ENV EDITOR=vim
