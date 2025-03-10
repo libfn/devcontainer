@@ -5,7 +5,7 @@
         "dockerfile": "Dockerfile",
         "args": {
             "HOME": "${localEnv:HOME}",
-            "CLANG_RELEASE": "19",
+            "CLANG_RELEASE": "20",
             "GCC_RELEASE": "14"
         }
     },
