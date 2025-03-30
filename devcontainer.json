@@ -4,7 +4,6 @@
     "build": {
         "dockerfile": "Dockerfile",
         "args": {
-            "HOME": "${localEnv:HOME}",
             "CLANG_RELEASE": "20",
             "GCC_RELEASE": "14"
         }
@@ -63,7 +62,7 @@
         {
             //  This allows sharing of ccache data between containers
             "source": "ccache_data",
-            "target": "${localEnv:HOME}/.ccache",
+            "target": "/root/.ccache",
             "type": "volume"
         }
     ],

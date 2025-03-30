@@ -13,7 +13,8 @@ FROM debian:${CODENAME}
 COPY --from=gcc /usr/local/ /usr/local/
 COPY --from=gcc /etc/ld.so.conf.d/*.conf /etc/ld.so.conf.d/
 
-WORKDIR /root
+ENV HOME=/root
+WORKDIR ${HOME}
 RUN set -ex ;\
     ldconfig -v ;\
     dpkg-divert --divert /usr/bin/gcc.orig --rename /usr/bin/gcc ;\
@@ -76,10 +77,6 @@ RUN set -ex ;\
     wget -O /etc/zsh/zshrc https://git.grml.org/f/grml-etc-core/etc/zsh/zshrc ;\
     wget -O /etc/zsh/newuser.zshrc.recommended  https://git.grml.org/f/grml-etc-core/etc/skel/.zshrc ;\
     chsh -s /bin/zsh
-
-ARG HOME=/home
-ENV HOME=${HOME}
-WORKDIR ${HOME}
 
 ENV VENV=${HOME}/venv
 ENV PATH=${VENV}/bin:${PATH}
