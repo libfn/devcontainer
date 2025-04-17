@@ -83,7 +83,10 @@ ENV PATH=${VENV}/bin:${PATH}
 ENV CCACHE_DIR=${HOME}/.ccache
 RUN set -ex ;\
     python3 -m venv ${VENV}  ;\
-    pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' ;\
+    # versions of pre-commit, clang-format and pre-commit-hooks synced with libfn/functional/ci/pre-commit ;\
+    pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' 'pre-commit<5' 'clang-format==18.1.8' 'pre-commit-hooks==5.0.0' ;\
+    # enforce fail if clang-format binary used by pre-commit is not installed in the expected location ;\
+    $(python -c "import site;print(site.getsitepackages()[0])")/clang_format/data/bin/clang-format --version ;\
     mkdir -p ${CCACHE_DIR}
 
 ENV EDITOR=vim
@@ -97,6 +100,7 @@ ENV CMAKE_BUILD_TYPE=Debug
 RUN cp /etc/zsh/newuser.zshrc.recommended .zshrc ;\
     touch .zshrc.local ;\
     ln -s .profile .zprofile ;\
+    echo 'export PATH=$(python -c "import site;print(site.getsitepackages()[0])")/clang_format/data/bin:${PATH}' >> .zprofile ;\
     echo "alias to-gcc='export CC=/usr/bin/gcc; export CXX=/usr/bin/g++; unset CXXFLAGS; env | grep --color=never -E \"^CC=|^CXX=|^CXXFLAGS=\"'" >> ~/.zprofile ;\
     echo "alias to-clang='export CC=/usr/bin/clang; export CXX=/usr/bin/clang++; export CXXFLAGS=-stdlib=libc++; env | grep --color=never -E \"^CC=|^CXX=|^CXXFLAGS=\"'" >> ~/.zprofile ;\
     echo "alias rm-build='realpath . | grep \"^.*/\.build[^/]*$\" &>/dev/null && find -mindepth 1 -maxdepth 1 -type d -not -path ./_deps | xargs rm -rf {} \; && find -mindepth 1 -maxdepth 1 -type f | xargs rm -f {} \;'" >> ~/.zprofile
