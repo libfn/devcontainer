@@ -4,8 +4,8 @@
     "build": {
         "dockerfile": "Dockerfile",
         "args": {
-            "CLANG_RELEASE": "20",
-            "GCC_RELEASE": "14"
+            "CLANG_RELEASE": "21",
+            "GCC_RELEASE": "15"
         }
     },
     "initializeCommand": [
