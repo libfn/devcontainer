@@ -40,7 +40,7 @@
                 "donjayamanne.githistory",
                 "twxs.cmake",
                 "ms-vsliveshare.vsliveshare",
-                "harikrishnan94.cxx-compiler-explorer"
+                "Google.geminicodeassist"
             ]
         }
     },
@@ -57,6 +57,12 @@
             // Pass ssh-agent sock for git authentication
             "source": "${localEnv:SSH_AUTH_SOCK}",
             "target": "/run/user/${localEnv:UID}/ssh",
+            "type": "bind"
+        },
+        {
+            // Pass Google credentials for Gemini Code Assist
+            "source": "${localEnv:HOME}/.gemini/oauth_creds.json",
+            "target": "/root/.gemini/oauth_creds.json",
             "type": "bind"
         },
         {
