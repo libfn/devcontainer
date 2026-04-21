@@ -4,7 +4,7 @@
     "build": {
         "dockerfile": "Dockerfile",
         "args": {
-            "CLANG_RELEASE": "21",
+            "CLANG_RELEASE": "22",
             "GCC_RELEASE": "15"
         }
     },
@@ -40,7 +40,7 @@
                 "donjayamanne.githistory",
                 "twxs.cmake",
                 "ms-vsliveshare.vsliveshare",
-                "Google.geminicodeassist"
+                "Continue.continue"
             ]
         }
     },
@@ -60,9 +60,9 @@
             "type": "bind"
         },
         {
-            // Pass Google credentials for Gemini Code Assist
-            "source": "${localEnv:HOME}/.gemini/oauth_creds.json",
-            "target": "/root/.gemini/oauth_creds.json",
+            // Pass Continue configuration
+            "source": "${localEnv:HOME}/.continue/config.yaml",
+            "target": "/root/.continue/config.yaml",
             "type": "bind"
         },
         {
