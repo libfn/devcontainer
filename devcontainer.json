@@ -26,21 +26,17 @@
             "extensions": [
                 "llvm-vs-code-extensions.vscode-clangd",
                 "xaver.clang-format",
-                "ms-vscode.cpptools-themes",
                 "eamodio.gitlens",
                 "GitHub.vscode-pull-request-github",
-                "jeff-hykin.better-cpp-syntax",
                 "ajshort.include-autocomplete",
                 "ms-azuretools.vscode-docker",
                 "GitHub.remotehub",
-                "GitHub.github-vscode-theme",
                 "ms-vscode.cmake-tools",
                 "github.vscode-github-actions",
                 "bierner.markdown-preview-github-styles",
                 "donjayamanne.githistory",
                 "twxs.cmake",
-                "ms-vsliveshare.vsliveshare",
-                "Continue.continue"
+                "ms-vsliveshare.vsliveshare"
             ]
         }
     },
@@ -57,12 +53,6 @@
             // Pass ssh-agent sock for git authentication
             "source": "${localEnv:SSH_AUTH_SOCK}",
             "target": "/run/user/${localEnv:UID}/ssh",
-            "type": "bind"
-        },
-        {
-            // Pass Continue configuration
-            "source": "${localEnv:HOME}/.continue/config.yaml",
-            "target": "/root/.continue/config.yaml",
             "type": "bind"
         },
         {
