@@ -6,7 +6,7 @@
         "args": {
             "CODENAME": "trixie",
             "CLANG_RELEASE": "22",
-            "GCC_RELEASE": "15"
+            "GCC_RELEASE": "16"
         }
     },
     "initializeCommand": [
@@ -36,7 +36,6 @@
                 "github.vscode-github-actions",
                 "bierner.markdown-preview-github-styles",
                 "donjayamanne.githistory",
-                "twxs.cmake",
                 "ms-vsliveshare.vsliveshare",
                 "Augment.vscode-augment"
             ]
