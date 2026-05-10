@@ -52,7 +52,8 @@ RUN set -ex ;\
       python3 python3-pip python3-venv ;\
     apt-get install -t llvm-toolchain-${CODENAME}-${CLANG_RELEASE} -y --no-install-recommends \
       clang-${CLANG_RELEASE} clang-tools-${CLANG_RELEASE} clang-tidy-${CLANG_RELEASE} clang-format-${CLANG_RELEASE} \
-      clangd-${CLANG_RELEASE} libc++-${CLANG_RELEASE}-dev libc++abi-${CLANG_RELEASE}-dev llvm-${CLANG_RELEASE} ;\
+      clangd-${CLANG_RELEASE} libc++-${CLANG_RELEASE}-dev libc++abi-${CLANG_RELEASE}-dev llvm-${CLANG_RELEASE} \
+      libclang-rt-${CLANG_RELEASE}-dev valgrind ;\
     apt-get clean
 
 RUN set -ex ;\
@@ -81,13 +82,38 @@ RUN set -ex ;\
 ENV VENV=${HOME}/venv
 ENV PATH=${VENV}/bin:${PATH}
 ENV CCACHE_DIR=${HOME}/.ccache
-RUN set -ex ;\
+RUN DEBIAN_FRONTEND=noninteractive ;\
+    set -ex ;\
     python3 -m venv ${VENV}  ;\
     # versions of pre-commit, clang-format and pre-commit-hooks synced with libfn/functional/ci/pre-commit ;\
     pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' 'pre-commit<5' 'clang-format==18.1.8' 'pre-commit-hooks==5.0.0' ;\
     # enforce fail if clang-format binary used by pre-commit is not installed in the expected location ;\
     $(python -c "import site;print(site.getsitepackages()[0])")/clang_format/data/bin/clang-format --version ;\
     mkdir -p ${CCACHE_DIR}
+
+ARG NODE_RELEASE=24
+RUN DEBIAN_FRONTEND=noninteractive ;\
+    set -ex ;\
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg ;\
+    printf "%s\n%s\n" \
+      "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_RELEASE}.x nodistro main" \
+      "deb-src [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_RELEASE}.x nodistro main" \
+      | tee /etc/apt/sources.list.d/nodesource.list ;\
+    printf "%s\n%s\n%s\n" \
+      "Package: nodejs" \
+      "Pin: origin deb.nodesource.com" \
+      "Pin-Priority: 600" \
+      | tee /etc/apt/preferences.d/nodejs ;\
+    apt-get update ;\
+    apt-get install -y --no-install-recommends nodejs ;\
+    node -v ;\
+    npm -v ;\
+    npm install -g prettier ;\
+    prettier --version ;\
+    npm install -g @augmentcode/auggie ;\
+    auggie --version ;\
+    apt-get clean ;\
+    npm cache clean --force
 
 ENV EDITOR=vim
 ENV VISUAL=vim
