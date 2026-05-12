@@ -86,7 +86,7 @@ RUN DEBIAN_FRONTEND=noninteractive ;\
     set -ex ;\
     python3 -m venv ${VENV}  ;\
     # versions of pre-commit, clang-format and pre-commit-hooks synced with libfn/functional/ci/pre-commit ;\
-    pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' 'pre-commit<5' 'clang-format==18.1.8' 'pre-commit-hooks==5.0.0' ;\
+    pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' 'pre-commit<5' 'clang-format==22.1.5' 'pre-commit-hooks==5.0.0' ;\
     # enforce fail if clang-format binary used by pre-commit is not installed in the expected location ;\
     $(python -c "import site;print(site.getsitepackages()[0])")/clang_format/data/bin/clang-format --version ;\
     mkdir -p ${CCACHE_DIR}
