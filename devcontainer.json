@@ -51,6 +51,12 @@
             "type": "bind"
         },
         {
+            // Pass .claude context
+            "source": "${localEnv:HOME}/.claude",
+            "target": "/root/.claude",
+            "type": "bind"
+        },
+        {
             // Pass ssh-agent sock for git authentication
             "source": "${localEnv:SSH_AUTH_SOCK}",
             "target": "/run/user/${localEnv:UID}/ssh",
@@ -60,6 +66,16 @@
             //  This allows sharing of ccache data between containers
             "source": "ccache_data",
             "target": "/root/.ccache",
+            "type": "volume"
+        },
+        {
+            "source": "cargo-registry",
+            "target": "/usr/local/cargo/registry",
+            "type": "volume"
+        },
+        {
+            "source": "cargo-git",
+            "target": "/usr/local/cargo/git",
             "type": "volume"
         }
     ],

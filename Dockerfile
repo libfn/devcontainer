@@ -21,6 +21,7 @@ RUN set -ex ;\
     dpkg-divert --divert /usr/bin/g++.orig --rename /usr/bin/g++ ;\
     dpkg-divert --divert /usr/bin/gfortran.orig --rename /usr/bin/gfortran ;\
     update-alternatives --install /usr/bin/cc cc /usr/local/bin/gcc 999 ;\
+    update-alternatives --install /usr/bin/c++ c++ /usr/local/bin/g++ 999 ;\
     update-alternatives --install \
       /usr/bin/gcc gcc /usr/local/bin/gcc 100 \
       --slave /usr/bin/g++ g++ /usr/local/bin/g++ \
@@ -49,11 +50,11 @@ RUN set -ex ;\
     apt-get update ;\
     apt-get install -y --no-install-recommends \
       lsb-release libc6-dev less vim xxd curl git grep sed gdb zsh lcov make cmake ninja-build openssh-client ccache jq zip unzip bzip2 \
-      python3 python3-pip python3-venv ;\
+      valgrind python3 python3-pip python3-venv  ;\
     apt-get install -t llvm-toolchain-${CODENAME}-${CLANG_RELEASE} -y --no-install-recommends \
       clang-${CLANG_RELEASE} clang-tools-${CLANG_RELEASE} clang-tidy-${CLANG_RELEASE} clang-format-${CLANG_RELEASE} \
       clangd-${CLANG_RELEASE} libc++-${CLANG_RELEASE}-dev libc++abi-${CLANG_RELEASE}-dev llvm-${CLANG_RELEASE} \
-      libclang-rt-${CLANG_RELEASE}-dev valgrind ;\
+      llvm-${CLANG_RELEASE}-dev libclang-rt-${CLANG_RELEASE}-dev ;\
     apt-get clean
 
 RUN set -ex ;\
@@ -86,7 +87,7 @@ RUN DEBIAN_FRONTEND=noninteractive ;\
     set -ex ;\
     python3 -m venv ${VENV}  ;\
     # versions of pre-commit, clang-format and pre-commit-hooks synced with libfn/functional/ci/pre-commit ;\
-    pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' 'pre-commit<5' 'clang-format==22.1.5' 'pre-commit-hooks==5.0.0' ;\
+    pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' 'pre-commit<5' 'clang-format==22.1.5' 'pre-commit-hooks==5.0.0' clangd shellcheck-py ;\
     # enforce fail if clang-format binary used by pre-commit is not installed in the expected location ;\
     $(python -c "import site;print(site.getsitepackages()[0])")/clang_format/data/bin/clang-format --version ;\
     mkdir -p ${CCACHE_DIR}
@@ -110,10 +111,38 @@ RUN DEBIAN_FRONTEND=noninteractive ;\
     npm -v ;\
     npm install -g prettier ;\
     prettier --version ;\
-    npm install -g @augmentcode/auggie ;\
+    npm install -g @augmentcode/auggie @anthropic-ai/claude-code ;\
     auggie --version ;\
+    claude --version ;\
     apt-get clean ;\
     npm cache clean --force
+
+ENV RUSTUP_HOME=/usr/local/rustup
+ENV CARGO_HOME=/usr/local/cargo
+ENV PATH=/usr/local/cargo/bin:${PATH}
+RUN DEBIAN_FRONTEND=noninteractive ;\
+    set -ex ;\
+    url="https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init"; \
+    curl --proto '=https' --tlsv1.2 -sSf "${url}" -o rustup-init ;\
+    chmod +x rustup-init ;\
+    ./rustup-init -y \
+      --no-modify-path \
+      --default-toolchain stable \
+      --profile minimal \
+      --component clippy,rustfmt \
+      --target wasm32-unknown-unknown ;\
+    rm rustup-init ;\
+    chmod -R a+w ${RUSTUP_HOME} ${CARGO_HOME}
+
+ARG GO_RELEASE=1.26.4
+ENV PATH=/usr/local/go/bin:${PATH}
+RUN set -ex ;\
+    url="https://go.dev/dl/go${GO_RELEASE}.linux-$(dpkg --print-architecture).tar.gz" ;\
+    curl --proto '=https' --tlsv1.2 -fsSL "${url}" -o go.tgz ;\
+    rm -rf /usr/local/go ;\
+    tar -C /usr/local -xzf go.tgz ;\
+    rm -f go.tgz ;\
+    go version
 
 ENV EDITOR=vim
 ENV VISUAL=vim
@@ -126,7 +155,6 @@ ENV CMAKE_BUILD_TYPE=Debug
 RUN cp /etc/zsh/newuser.zshrc.recommended .zshrc ;\
     touch .zshrc.local ;\
     ln -s .profile .zprofile ;\
-    echo 'export PATH=$(python -c "import site;print(site.getsitepackages()[0])")/clang_format/data/bin:${PATH}' >> .zprofile ;\
     echo "alias to-gcc='export CC=/usr/bin/gcc; export CXX=/usr/bin/g++; unset CXXFLAGS; env | grep --color=never -E \"^CC=|^CXX=|^CXXFLAGS=\"'" >> ~/.zprofile ;\
     echo "alias to-clang='export CC=/usr/bin/clang; export CXX=/usr/bin/clang++; export CXXFLAGS=-stdlib=libc++; env | grep --color=never -E \"^CC=|^CXX=|^CXXFLAGS=\"'" >> ~/.zprofile ;\
     echo "alias rm-build='realpath . | grep \"^.*/\.build[^/]*$\" &>/dev/null && find -mindepth 1 -maxdepth 1 -type d -not -path ./_deps | xargs rm -rf {} \; && find -mindepth 1 -maxdepth 1 -type f | xargs rm -f {} \;'" >> ~/.zprofile
