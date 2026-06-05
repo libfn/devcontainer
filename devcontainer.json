@@ -57,6 +57,11 @@
             "type": "bind"
         },
         {
+            "source": "${localEnv:HOME}/.claude.json",
+            "target": "/root/.claude.json",
+            "type": "bind"
+        },
+        {
             // Pass ssh-agent sock for git authentication
             "source": "${localEnv:SSH_AUTH_SOCK}",
             "target": "/run/user/${localEnv:UID}/ssh",

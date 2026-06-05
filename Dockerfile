@@ -33,12 +33,12 @@ RUN set -ex ;\
       --slave /usr/bin/gcov-tool gcov-tool /usr/local/bin/gcov-tool \
       --slave /usr/bin/gcov-dump gcov-dump /usr/local/bin/gcov-dump \
       --slave /usr/bin/lto-dump lto-dump /usr/local/bin/lto-dump ;\
-      update-alternatives --auto cc ;\
-      update-alternatives --auto gcc
+    update-alternatives --auto cc ;\
+    update-alternatives --auto gcc
 
 ARG CLANG_RELEASE=19
 RUN set -ex ;\
-    DEBIAN_FRONTEND=noninteractive ;\
+    export DEBIAN_FRONTEND=noninteractive ;\
     CODENAME=$( . /etc/os-release && echo $VERSION_CODENAME ) ;\
     apt-get update ;\
     apt-get install -y --no-install-recommends ca-certificates wget gpg gpg-agent ;\
@@ -50,14 +50,15 @@ RUN set -ex ;\
     apt-get update ;\
     apt-get install -y --no-install-recommends \
       lsb-release libc6-dev less vim xxd curl git grep sed gdb zsh lcov make cmake ninja-build openssh-client ccache jq zip unzip bzip2 \
-      valgrind python3 python3-pip python3-venv  ;\
+      valgrind python3 python3-pip python3-venv ;\
     apt-get install -t llvm-toolchain-${CODENAME}-${CLANG_RELEASE} -y --no-install-recommends \
       clang-${CLANG_RELEASE} clang-tools-${CLANG_RELEASE} clang-tidy-${CLANG_RELEASE} clang-format-${CLANG_RELEASE} \
       clangd-${CLANG_RELEASE} libc++-${CLANG_RELEASE}-dev libc++abi-${CLANG_RELEASE}-dev llvm-${CLANG_RELEASE} \
       llvm-${CLANG_RELEASE}-dev libclang-rt-${CLANG_RELEASE}-dev ;\
-    apt-get clean
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN set -ex ;\
+    export DEBIAN_FRONTEND=noninteractive ;\
     update-alternatives --install \
       /usr/bin/clang clang /usr/bin/clang-${CLANG_RELEASE} 100 \
       --slave /usr/bin/clang++ clang++ /usr/bin/clang++-${CLANG_RELEASE} ;\
@@ -77,15 +78,14 @@ RUN set -ex ;\
 
 RUN set -ex ;\
     wget -O /etc/zsh/zshrc https://git.grml.org/f/grml-etc-core/etc/zsh/zshrc ;\
-    wget -O /etc/zsh/newuser.zshrc.recommended  https://git.grml.org/f/grml-etc-core/etc/skel/.zshrc ;\
+    wget -O /etc/zsh/newuser.zshrc.recommended https://git.grml.org/f/grml-etc-core/etc/skel/.zshrc ;\
     chsh -s /bin/zsh
 
 ENV VENV=${HOME}/venv
 ENV PATH=${VENV}/bin:${PATH}
 ENV CCACHE_DIR=${HOME}/.ccache
-RUN DEBIAN_FRONTEND=noninteractive ;\
-    set -ex ;\
-    python3 -m venv ${VENV}  ;\
+RUN set -ex ;\
+    python3 -m venv ${VENV} ;\
     # versions of pre-commit, clang-format and pre-commit-hooks synced with libfn/functional/ci/pre-commit ;\
     pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' 'pre-commit<5' 'clang-format==22.1.5' 'pre-commit-hooks==5.0.0' clangd shellcheck-py ;\
     # enforce fail if clang-format binary used by pre-commit is not installed in the expected location ;\
@@ -93,9 +93,9 @@ RUN DEBIAN_FRONTEND=noninteractive ;\
     mkdir -p ${CCACHE_DIR}
 
 ARG NODE_RELEASE=24
-RUN DEBIAN_FRONTEND=noninteractive ;\
-    set -ex ;\
-    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg ;\
+RUN set -ex ;\
+    export DEBIAN_FRONTEND=noninteractive ;\
+    curl --proto '=https' --tlsv1.2 -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg ;\
     printf "%s\n%s\n" \
       "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_RELEASE}.x nodistro main" \
       "deb-src [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_RELEASE}.x nodistro main" \
@@ -114,20 +114,26 @@ RUN DEBIAN_FRONTEND=noninteractive ;\
     npm install -g @augmentcode/auggie @anthropic-ai/claude-code ;\
     auggie --version ;\
     claude --version ;\
-    apt-get clean ;\
+    apt-get clean && rm -rf /var/lib/apt/lists/* ;\
     npm cache clean --force
 
+ARG RUST_RELEASE=stable
 ENV RUSTUP_HOME=/usr/local/rustup
 ENV CARGO_HOME=/usr/local/cargo
 ENV PATH=/usr/local/cargo/bin:${PATH}
-RUN DEBIAN_FRONTEND=noninteractive ;\
-    set -ex ;\
-    url="https://static.rust-lang.org/rustup/dist/x86_64-unknown-linux-gnu/rustup-init"; \
+RUN set -ex ;\
+    arch=$(uname -m) ;\
+    case "$arch" in \
+        x86_64)  rustArch='x86_64-unknown-linux-gnu' ;;\
+        aarch64) rustArch='aarch64-unknown-linux-gnu' ;;\
+        *) echo "unsupported architecture: $arch"; exit 1 ;;\
+    esac ;\
+    url="https://static.rust-lang.org/rustup/dist/${rustArch}/rustup-init" ;\
     curl --proto '=https' --tlsv1.2 -sSf "${url}" -o rustup-init ;\
     chmod +x rustup-init ;\
     ./rustup-init -y \
       --no-modify-path \
-      --default-toolchain stable \
+      --default-toolchain ${RUST_RELEASE} \
       --profile minimal \
       --component clippy,rustfmt \
       --target wasm32-unknown-unknown ;\
