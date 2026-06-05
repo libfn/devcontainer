@@ -57,6 +57,11 @@
             "type": "bind"
         },
         {
+            "source": "${localEnv:HOME}/.claude",
+            "target": "${localEnv:HOME}/.claude",
+            "type": "bind"
+        },
+        {
             "source": "${localEnv:HOME}/.claude.json",
             "target": "/root/.claude.json",
             "type": "bind"
