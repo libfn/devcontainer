@@ -88,7 +88,7 @@ RUN set -ex ;\
     python3 -m venv ${VENV} ;\
     # versions of pre-commit, clang-format and pre-commit-hooks synced with libfn/functional/ci/pre-commit ;\
     pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' 'pre-commit<5' 'clang-format==22.1.5' 'pre-commit-hooks==5.0.0' clangd shellcheck-py ;\
-    # cvise (built ad-hoc from source per reduction job) imports these past stdlib ;\
+    # cvise imports these past stdlib ;\
     pip --no-cache-dir install chardet psutil pebble msgspec zstandard ;\
     # enforce fail if clang-format binary used by pre-commit is not installed in the expected location ;\
     $(python -c "import site;print(site.getsitepackages()[0])")/clang_format/data/bin/clang-format --version ;\
@@ -151,6 +151,24 @@ RUN set -ex ;\
     tar -C /usr/local -xzf go.tgz ;\
     rm -f go.tgz ;\
     go version
+
+# TREE_SITTER_RELEASE must match tree-sitter/Makefile VERSION at CVISE_COMMIT.
+ARG CVISE_COMMIT=64ff7de2
+ARG TREE_SITTER_RELEASE=0.25.8
+RUN set -ex ;\
+    cargo install tree-sitter-cli --version ${TREE_SITTER_RELEASE} --root /usr/local ;\
+    git clone https://github.com/marxin/cvise /root/cvise ;\
+    git -C /root/cvise checkout ${CVISE_COMMIT} ;\
+    cmake -G Ninja -S /root/cvise -B /root/cvise/build \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_PREFIX_PATH=/usr/lib/llvm-${CLANG_RELEASE} \
+      -DCMAKE_C_FLAGS=-Wno-error=sign-compare \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DPython3_EXECUTABLE=${VENV}/bin/python ;\
+    cmake --build /root/cvise/build ;\
+    cmake --build /root/cvise/build --target install ;\
+    rm -rf /root/cvise ;\
+    cvise --version
 
 ENV EDITOR=vim
 ENV VISUAL=vim
