@@ -41,7 +41,7 @@ RUN set -ex ;\
     export DEBIAN_FRONTEND=noninteractive ;\
     CODENAME=$( . /etc/os-release && echo $VERSION_CODENAME ) ;\
     apt-get update ;\
-    apt-get install -y --no-install-recommends ca-certificates wget gpg gpg-agent ;\
+    apt-get install -y --no-install-recommends ca-certificates wget gpg gpg-agent flex ;\
     wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm.gpg ;\
     printf "%s\n%s\n" \
       "deb [signed-by=/etc/apt/keyrings/llvm.gpg] https://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-${CLANG_RELEASE} main" \
@@ -50,11 +50,11 @@ RUN set -ex ;\
     apt-get update ;\
     apt-get install -y --no-install-recommends \
       lsb-release libc6-dev less vim xxd curl git grep sed gdb zsh lcov make cmake ninja-build openssh-client ccache jq zip unzip bzip2 \
-      valgrind python3 python3-pip python3-venv ;\
+      valgrind unifdef python3 python3-pip python3-venv ;\
     apt-get install -t llvm-toolchain-${CODENAME}-${CLANG_RELEASE} -y --no-install-recommends \
       clang-${CLANG_RELEASE} clang-tools-${CLANG_RELEASE} clang-tidy-${CLANG_RELEASE} clang-format-${CLANG_RELEASE} \
       clangd-${CLANG_RELEASE} libc++-${CLANG_RELEASE}-dev libc++abi-${CLANG_RELEASE}-dev llvm-${CLANG_RELEASE} \
-      llvm-${CLANG_RELEASE}-dev libclang-rt-${CLANG_RELEASE}-dev ;\
+      libclang-${CLANG_RELEASE}-dev llvm-${CLANG_RELEASE}-dev libclang-rt-${CLANG_RELEASE}-dev ;\
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 RUN set -ex ;\
@@ -88,6 +88,8 @@ RUN set -ex ;\
     python3 -m venv ${VENV} ;\
     # versions of pre-commit, clang-format and pre-commit-hooks synced with libfn/functional/ci/pre-commit ;\
     pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' 'pre-commit<5' 'clang-format==22.1.5' 'pre-commit-hooks==5.0.0' clangd shellcheck-py ;\
+    # cvise (built ad-hoc from source per reduction job) imports these past stdlib ;\
+    pip --no-cache-dir install chardet psutil pebble msgspec zstandard ;\
     # enforce fail if clang-format binary used by pre-commit is not installed in the expected location ;\
     $(python -c "import site;print(site.getsitepackages()[0])")/clang_format/data/bin/clang-format --version ;\
     mkdir -p ${CCACHE_DIR}
