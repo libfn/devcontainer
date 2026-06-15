@@ -170,6 +170,12 @@ RUN set -ex ;\
     rm -rf /root/cvise ;\
     cvise --version
 
+RUN set -ex ;\
+    export DEBIAN_FRONTEND=noninteractive ;\
+    apt-get update ;\
+    apt-get install -y --no-install-recommends qemu-user g++-aarch64-linux-gnu ;\
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 ENV EDITOR=vim
 ENV VISUAL=vim
 ENV CC=/usr/bin/gcc
