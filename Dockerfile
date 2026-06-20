@@ -1,5 +1,5 @@
-ARG CODENAME=bookworm
-ARG GCC_RELEASE=14
+ARG CODENAME=trixie
+ARG GCC_RELEASE=16
 ARG GCC_DIST=${GCC_RELEASE}-${CODENAME}
 FROM gcc:${GCC_DIST} AS gcc
 RUN set -ex ;\
@@ -36,21 +36,45 @@ RUN set -ex ;\
     update-alternatives --auto cc ;\
     update-alternatives --auto gcc
 
-ARG CLANG_RELEASE=19
+ARG NODE_RELEASE=24
+RUN set -ex ;\
+    export DEBIAN_FRONTEND=noninteractive ;\
+    apt-get update ;\
+    apt-get install -y --no-install-recommends ca-certificates curl gpg ;\
+    curl --proto '=https' --tlsv1.2 -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg ;\
+    printf "%s\n%s\n" \
+      "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_RELEASE}.x nodistro main" \
+      "deb-src [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_RELEASE}.x nodistro main" \
+      | tee /etc/apt/sources.list.d/nodesource.list ;\
+    printf "%s\n%s\n%s\n" \
+      "Package: nodejs" \
+      "Pin: origin deb.nodesource.com" \
+      "Pin-Priority: 600" \
+      | tee /etc/apt/preferences.d/nodejs ;\
+    apt-get update ;\
+    apt-get install -y --no-install-recommends \
+      wget gpg-agent flex openssh-client zsh \
+      lsb-release libc-devtools libc6-dev less vim xxd git grep sed \
+      gdb lcov make cmake ninja-build ccache zip unzip bzip2 \
+      psmisc patch valgrind unifdef gh jq nodejs \
+      python3 python3-pip python3-venv \
+      binfmt-support qemu-user-binfmt qemu-user g++-aarch64-linux-gnu ;\
+    gdb --version ;\
+    cmake --version ;\
+    node --version ;\
+    npm --version ;\
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ARG CLANG_RELEASE=22
 RUN set -ex ;\
     export DEBIAN_FRONTEND=noninteractive ;\
     CODENAME=$( . /etc/os-release && echo $VERSION_CODENAME ) ;\
-    apt-get update ;\
-    apt-get install -y --no-install-recommends ca-certificates wget gpg gpg-agent flex ;\
     wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm.gpg ;\
     printf "%s\n%s\n" \
       "deb [signed-by=/etc/apt/keyrings/llvm.gpg] https://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-${CLANG_RELEASE} main" \
       "deb-src [signed-by=/etc/apt/keyrings/llvm.gpg] https://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-${CLANG_RELEASE} main" \
       | tee /etc/apt/sources.list.d/llvm.list ;\
     apt-get update ;\
-    apt-get install -y --no-install-recommends \
-      lsb-release libc6-dev less vim xxd curl git grep sed gdb zsh lcov make cmake ninja-build openssh-client ccache jq zip unzip bzip2 \
-      valgrind unifdef python3 python3-pip python3-venv ;\
     apt-get install -t llvm-toolchain-${CODENAME}-${CLANG_RELEASE} -y --no-install-recommends \
       clang-${CLANG_RELEASE} clang-tools-${CLANG_RELEASE} clang-tidy-${CLANG_RELEASE} clang-format-${CLANG_RELEASE} \
       clangd-${CLANG_RELEASE} libc++-${CLANG_RELEASE}-dev libc++abi-${CLANG_RELEASE}-dev llvm-${CLANG_RELEASE} \
@@ -86,37 +110,21 @@ ENV PATH=${VENV}/bin:${PATH}
 ENV CCACHE_DIR=${HOME}/.ccache
 RUN set -ex ;\
     python3 -m venv ${VENV} ;\
+    python --version ;\
     # versions of pre-commit, clang-format and pre-commit-hooks synced with libfn/functional/ci/pre-commit ;\
-    pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' 'pre-commit<5' 'clang-format==22.1.5' 'pre-commit-hooks==5.0.0' clangd shellcheck-py ;\
+    pip --no-cache-dir install 'gcovr<8' 'PyYAML<7' 'pre-commit<5' 'pre-commit-hooks==5.0.0' 'clang-format==22.1.5' clangd shellcheck-py ;\
     # cvise imports these past stdlib ;\
     pip --no-cache-dir install chardet psutil pebble msgspec zstandard ;\
     # enforce fail if clang-format binary used by pre-commit is not installed in the expected location ;\
     $(python -c "import site;print(site.getsitepackages()[0])")/clang_format/data/bin/clang-format --version ;\
     mkdir -p ${CCACHE_DIR}
 
-ARG NODE_RELEASE=24
 RUN set -ex ;\
-    export DEBIAN_FRONTEND=noninteractive ;\
-    curl --proto '=https' --tlsv1.2 -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg ;\
-    printf "%s\n%s\n" \
-      "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_RELEASE}.x nodistro main" \
-      "deb-src [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_RELEASE}.x nodistro main" \
-      | tee /etc/apt/sources.list.d/nodesource.list ;\
-    printf "%s\n%s\n%s\n" \
-      "Package: nodejs" \
-      "Pin: origin deb.nodesource.com" \
-      "Pin-Priority: 600" \
-      | tee /etc/apt/preferences.d/nodejs ;\
-    apt-get update ;\
-    apt-get install -y --no-install-recommends nodejs ;\
-    node -v ;\
-    npm -v ;\
     npm install -g prettier ;\
     prettier --version ;\
     npm install -g @augmentcode/auggie @anthropic-ai/claude-code ;\
     auggie --version ;\
     claude --version ;\
-    apt-get clean && rm -rf /var/lib/apt/lists/* ;\
     npm cache clean --force
 
 ARG RUST_RELEASE=stable
@@ -169,12 +177,6 @@ RUN set -ex ;\
     cmake --build /root/cvise/build --target install ;\
     rm -rf /root/cvise ;\
     cvise --version
-
-RUN set -ex ;\
-    export DEBIAN_FRONTEND=noninteractive ;\
-    apt-get update ;\
-    apt-get install -y --no-install-recommends qemu-user g++-aarch64-linux-gnu ;\
-    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 ENV EDITOR=vim
 ENV VISUAL=vim
