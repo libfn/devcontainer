@@ -186,6 +186,20 @@ ENV CMAKE_CXX_COMPILER_LAUNCHER=/usr/bin/ccache
 ENV CMAKE_GENERATOR=Ninja
 ENV CMAKE_BUILD_TYPE=Debug
 
+# Clang 15 is not available in Debian bookworm, but the following lines can be used to install it if needed.
+# RUN set -ex ;\
+#    export DEBIAN_FRONTEND=noninteractive ;\
+#    CODENAME=$( . /etc/os-release && echo $VERSION_CODENAME ) ;\
+#    printf "%s\n%s\n" \
+#      "deb [signed-by=/etc/apt/keyrings/llvm.gpg] https://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-15 main" \
+#      "deb-src [signed-by=/etc/apt/keyrings/llvm.gpg] https://apt.llvm.org/${CODENAME}/ llvm-toolchain-${CODENAME}-15 main" \
+#      | tee /etc/apt/sources.list.d/llvm-15.list ;\
+#    apt-get update ;\
+#    apt-get install -t llvm-toolchain-${CODENAME}-15 -y --no-install-recommends \
+#      clang-15 clang++-15 clang-tools-15 clang-tidy-15 clang-format-15 \
+#      clangd-15 llvm-15 ;\
+#    apt-get clean && rm -rf /var/lib/apt/lists/*
+
 RUN cp /etc/zsh/newuser.zshrc.recommended .zshrc ;\
     touch .zshrc.local ;\
     ln -s .profile .zprofile ;\
